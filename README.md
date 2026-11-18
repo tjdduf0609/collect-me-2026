@@ -1,14 +1,15 @@
 # 올해의 나 수집하기 📝
 
 친구들끼리 50일 동안 하루 한 주제씩 쓰는 링 바인더 다이어리 웹사이트예요.
-Vite(바닐라 JS) + Supabase(DB·로그인·사진) + Vercel(배포) 구성이고, 7~10명 규모면 전부 무료 플랜으로 충분해요.
+Vite(바닐라 JS) + Supabase(DB·사진) + Vercel(배포) 구성이고, 7~10명 규모면 전부 무료 플랜으로 충분해요.
 
 50가지 주제는 kyul님의 ‘올해의 나 수집하기’(© 2026 kyul)에서 빌려 왔어요.
 
 ## 기능
 
-- 이메일 로그인 (비밀번호 없이 메일 속 링크 또는 숫자 코드로)
-- 초대한 이메일만 로그인 가능 (가입 막음)
+- 이메일·아이디 없이 **빈자리를 골라 앉는 방식** (닉네임 + 캐릭터 + 비밀번호)
+- 다른 기기에서는 내 자리를 눌러 비밀번호만 입력하면 이어서 쓰기
+- 비밀번호 5번 틀리면 그 자리 10분 잠금, 프로필 창에서 비밀번호 바꾸기 가능
 - 오늘 날짜 주제 자동 표시, 미래 날짜는 잠금 (서버에서도 막음)
 - 그날 내 답을 써야 친구들 답이 열림 (서버 권한 규칙으로 막아서 개발자도구로도 못 봄)
 - 글 + 사진, 프로필 사진/캐릭터, 연속 기록, 친구별 모아보기
@@ -36,40 +37,13 @@ supabase/schema.sql   DB 테이블 + 권한 규칙 + 사진 저장소
    - Project URL
    - anon (또는 publishable) key
 
-### 2. 이메일 발송 설정 (꼭 해야 해요!)
+### 2. 익명 로그인 켜기
 
-Supabase 기본 메일 서버는 **프로젝트 팀원 이메일로만, 시간당 2통까지만** 보내요. 친구들한테 로그인 메일이 가려면 직접 SMTP를 연결해야 해요. 도메인이 없으면 Gmail이 제일 쉬워요.
+자리 방식은 기기마다 자동으로 익명 로그인을 한 뒤, 자리 비밀번호로 본인 확인을 해요.
 
-1. Google 계정 → 보안 → **2단계 인증** 켜기
-2. Google 계정 → 보안 → **앱 비밀번호** 만들기 (16자리 복사)
-3. Supabase → **Authentication → Emails → SMTP Settings** → Enable custom SMTP
-   - Sender email: 내 Gmail 주소
-   - Sender name: 올해의 나 수집하기
-   - Host: `smtp.gmail.com`
-   - Port: `587`
-   - Username: 내 Gmail 주소
-   - Password: 방금 만든 앱 비밀번호
-4. 저장
+**Authentication → Sign In / Providers → Allow anonymous sign-ins: 켜기**
 
-### 3. 로그인 메일에 숫자 코드 넣기
-
-휴대폰에서는 메일 링크가 다른 브라우저로 열려서 로그인이 안 이어질 때가 있어요. 코드도 같이 보내면 사이트에 직접 입력할 수 있어요.
-
-**Authentication → Emails → Templates → Magic Link** 본문을 아래처럼 바꾸기:
-
-```html
-<h2>올해의 나 수집하기 📝</h2>
-<p>로그인 코드: <b style="font-size:20px">{{ .Token }}</b></p>
-<p><a href="{{ .ConfirmationURL }}">또는 여기를 눌러 바로 들어가기</a></p>
-```
-
-### 4. 아무나 가입 못 하게 막기
-
-**Authentication → Sign In / Providers**
-- Email: 켜짐 확인
-- **Allow new users to sign up: 끄기**
-
-### 5. GitHub에 올리고 Vercel로 배포
+### 3. GitHub에 올리고 Vercel로 배포
 
 ```bash
 git init && git add . && git commit -m "올해의 나 수집하기"
@@ -85,20 +59,31 @@ git push -u origin main
    - `VITE_SUPABASE_ANON_KEY` = anon/publishable key
 4. Deploy → `https://collect-me-2026.vercel.app` 같은 주소가 생겨요
 
-### 6. 사이트 주소를 Supabase에 알려 주기
+### 4. 단톡방에 공유
 
-**Authentication → URL Configuration**
-- Site URL: Vercel 주소 (예: `https://collect-me-2026.vercel.app`)
-- Redirect URLs: 같은 주소 추가 (로컬 테스트용으로 `http://localhost:5173`도 추가)
+Vercel 주소만 공유하면 끝! 친구들은 들어와서 빈자리를 골라 닉네임, 캐릭터, 비밀번호를 정하고 앉아요. 프로필 사진은 들어간 뒤 왼쪽 페이지의 EDIT에서 올려요.
 
-### 7. 친구 등록하기
+## 자리 관리 (SQL Editor에서)
 
-**Authentication → Users → Add user → Create new user**
-- 친구 이메일 입력, 비밀번호는 아무거나 (안 씀)
-- **Auto Confirm User 체크**
-- 나 포함 8명 반복
+```sql
+-- 자리 개수 늘리기: 10자리까지
+insert into public.seats (seat) select g from generate_series(1, 10) g on conflict do nothing;
 
-이제 단톡방에 Vercel 주소를 공유하면 끝! 친구들은 이메일 입력 → 메일 속 코드 입력 → 닉네임/프로필 설정 순서로 들어와요.
+-- 아무도 안 앉은 빈자리 없애기 (모르는 사람이 앉는 걸 막고 싶을 때, 친구들이 다 앉은 뒤에)
+delete from public.seats s where s.nick is null;
+
+-- 3번 자리 친구가 비밀번호를 잊었을 때: 임시 비밀번호 1234로 초기화 (글은 그대로)
+update public.seat_secrets
+   set pin_hash = extensions.crypt('1234', extensions.gen_salt('bf')), failed = 0, locked_until = null
+ where seat = 3;
+
+-- 3번 자리를 완전히 비우기 (닉네임/글/비밀번호 모두 삭제)
+delete from public.answers where seat = 3;
+delete from public.seat_secrets where seat = 3;
+update public.seats set user_id = null, nick = null, emoji = '🙂', photo_path = null, joined_at = null where seat = 3;
+```
+
+> 링크를 아는 사람은 누구나 빈자리에 앉을 수 있어요. 링크는 단톡방에만 공유하고, 친구들이 다 앉으면 위의 "빈자리 없애기"를 실행해 두면 안전해요. 자리에 앉지 않은 사람은 글과 사진을 볼 수 없어요.
 
 ---
 
@@ -114,10 +99,9 @@ npm run dev             # http://localhost:5173
 
 | 증상 | 해결 |
 |---|---|
-| "초대받지 않은 이메일이에요" | 7번에서 그 이메일을 등록했는지 확인 |
-| 메일이 안 옴 / "Email address not authorized" | 2번 SMTP 설정 확인, 스팸함 확인 |
-| "메일을 너무 자주 요청했어요" | 같은 사람은 60초에 한 번만 요청 가능. 전체 한도는 Authentication → Rate Limits에서 조절 |
-| 링크 누르면 localhost로 감 | 6번 Site URL을 Vercel 주소로 |
+| "다이어리에 연결하지 못했어요" | 2번 익명 로그인이 켜져 있는지 확인 |
+| 비밀번호를 잊음 | 위 "자리 관리"의 임시 비밀번호 초기화 |
+| 한 기기에서 쓰다가 갑자기 저장이 안 됨 | 다른 기기에서 같은 자리로 들어오면 이전 기기는 자리에서 내려와요. 새로고침 후 다시 들어가기 |
 | 사진이 안 올라감 | 사진은 6MB 이하, JPG/PNG/WEBP/GIF만 가능 (자동으로 줄여서 올리긴 해요) |
 | HEIC(아이폰) 사진이 안 됨 | 일부 브라우저는 HEIC를 못 읽어요. 아이폰 설정 → 카메라 → 포맷 → 높은 호환성 |
 

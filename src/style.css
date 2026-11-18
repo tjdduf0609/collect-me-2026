@@ -152,7 +152,7 @@ img{max-width:100%;display:block}
 .sheet{position:fixed;z-index:21;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,380px);background:var(--page);border-radius:16px;padding:20px;border:1px solid var(--line)}
 .sheet h3{margin:0 0 4px;font-size:17px;font-weight:800}
 .sheet .sub{color:var(--muted);font-size:13px;margin:0 0 12px}
-.sheet input[type=text]{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;background:var(--page);color:var(--ink)}
+.sheet input[type=text],.sheet input[type=password]{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;background:var(--page);color:var(--ink)}
 .emojis{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:12px 0}
 .emojis button{aspect-ratio:1;border:1.5px solid transparent;border-radius:8px;background:var(--soft);font-size:20px;padding:0}
 .emojis button[aria-pressed="true"]{border-color:var(--tab)}
@@ -183,3 +183,8 @@ img{max-width:100%;display:block}
 .login input{flex:1;min-width:180px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:inherit;background:var(--page);color:var(--ink)}
 .login .hint{color:var(--muted);font-size:13px}
 .login .ok{color:var(--link);font-size:14px}
+
+/* seats */
+.friend.seat-empty{border-style:dashed;background:transparent}
+.friend.seat-empty .big{background:transparent;border:1.5px dashed var(--line);color:var(--muted);font-size:22px}
+.friend.seat-empty b{color:var(--muted)}
